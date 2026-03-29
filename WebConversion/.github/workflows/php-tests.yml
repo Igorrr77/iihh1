@@ -1,0 +1,83 @@
+name: PHP Tests
+
+on:
+  push:
+    paths:
+      - '**.php'
+      - '.github/workflows/php-tests.yml'
+  pull_request:
+    paths:
+      - '**.php'
+      - '.github/workflows/php-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Lint
+        run: |
+          cd WebConversion
+          find app public config scripts tests -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Unit tests
+        run: |
+          cd WebConversion
+          php tests/run.php
+
+      - name: Security scan
+        run: |
+          cd WebConversion
+          php scripts/security_scan.php
+
+      - name: Integration smoke
+        run: |
+          cd WebConversion
+          php scripts/integration_smoke.php
+
+      - name: Load smoke
+        run: |
+          cd WebConversion
+          php scripts/load_test.php
+
+      - name: Contract tests
+        run: |
+          cd WebConversion
+          php scripts/contract_test.php
+
+      - name: E2E tests
+        run: |
+          cd WebConversion
+          php scripts/e2e_test.php
+
+      - name: Quality gate
+        run: |
+          cd WebConversion
+          php scripts/quality_gate.php
+
+      - name: Go/No-Go advisory report
+        run: |
+          cd WebConversion
+          php scripts/go_no_go_report.php --advisory
+
+      - name: GA stabilization advisory report
+        run: |
+          cd WebConversion
+          php scripts/ga_stabilization_report.php --advisory
+
+      - name: Provider matrix advisory check
+        run: |
+          cd WebConversion
+          php scripts/provider_matrix_check.php --advisory
+
+      - name: Production stability advisory check
+        run: |
+          cd WebConversion
+          php scripts/production_stability_check.php --advisory
