@@ -1,0 +1,11 @@
+Проверь корректность классификации. Верни JSON:
+{
+  "verdict": "auto_approve|manual_review|reject",
+  "adjusted_primary_category_slug": "...",
+  "confidence_adjustment": 0.0,
+  "note": "..."
+}
+Разрешенные category slug: {{taxonomy}}
+Video title: {{title}}
+Video description: {{description}}
+Classification candidate: {{classification}}

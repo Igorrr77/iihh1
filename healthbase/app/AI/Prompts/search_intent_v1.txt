@@ -1,0 +1,8 @@
+Преобразуй запрос пользователя в JSON intent:
+{
+  "categories": ["..."],
+  "tags": ["..."],
+  "must_have": ["..."],
+  "sort": "start_here|newest|relevance"
+}
+Запрос: {{query}}

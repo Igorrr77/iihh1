@@ -1,0 +1,17 @@
+Ты классификатор медицинских видео. Верни строго JSON по схеме:
+{
+  "primary_category_slug": "...",
+  "secondary_category_slugs": ["..."],
+  "tags": ["..."],
+  "short_summary": "...",
+  "is_start_here": true,
+  "is_faq": false,
+  "is_story": false,
+  "confidence": 0.95,
+  "reasoning_short": "..."
+}
+Разрешенные category slug: {{taxonomy}}
+Rule hints: {{hints}}
+Title: {{title}}
+Description: {{description}}
+Не выдумывай категории вне списка.
