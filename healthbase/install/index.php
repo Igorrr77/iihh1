@@ -28,6 +28,7 @@ function check_env(): array {
     $checks['json'] = extension_loaded('json');
     $checks['mbstring'] = extension_loaded('mbstring');
     $checks['writable_storage'] = is_writable(root_path('storage'));
+    $checks['writable_root'] = is_writable(root_path());
     return $checks;
 }
 
@@ -49,8 +50,15 @@ if ($step === 4 && !empty($_SESSION['install'])) {
         $basePath = ($basePath === '/' || $basePath === '') ? '' : '/' . trim($basePath, '/');
 
         $env = "APP_ENV=production\nAPP_URL={$i['site_url']}\nAPP_BASE_PATH={$basePath}\nDB_HOST={$i['db_host']}\nDB_PORT={$i['db_port']}\nDB_DATABASE={$i['db_name']}\nDB_USERNAME={$i['db_user']}\nDB_PASSWORD={$i['db_pass']}\nYOUTUBE_CHANNEL_ID={$i['youtube_channel_id']}\nYOUTUBE_API_KEY={$i['youtube_api_key']}\nGEMINI_API_KEY={$i['gemini_api_key']}\nGEMINI_MODEL_ID={$i['gemini_model_id']}\nCRON_TOKEN=" . bin2hex(random_bytes(24)) . "\n";
-        file_put_contents(root_path('.env'), $env);
-        file_put_contents($lockFile, gmdate('c'));
+        $envWrite = file_put_contents(root_path('.env'), $env);
+        if ($envWrite === false) {
+            throw new RuntimeException('Не удалось записать файл .env. Проверьте права записи в корень проекта.');
+        }
+
+        $lockWrite = file_put_contents($lockFile, gmdate('c'));
+        if ($lockWrite === false) {
+            throw new RuntimeException('Не удалось создать storage/install.lock. Проверьте права записи в папку storage.');
+        }
     } catch (Throwable $e) {
         $errors[] = $e->getMessage();
     }
