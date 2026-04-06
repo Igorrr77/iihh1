@@ -1,0 +1,10 @@
+Options -Indexes
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule ^sitemap\.xml$ sitemap.xml.php [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]
+</IfModule>
