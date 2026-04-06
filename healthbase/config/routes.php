@@ -16,7 +16,7 @@ return function ($router): void {
     $router->get('/search', [SearchController::class, 'index'], 'search');
     $router->post('/search/ai', [SearchController::class, 'ai'], 'search.ai');
 
-    $router->get('/admin', [AdminController::class, 'dashboard'], 'admin.dashboard', ['admin']);
+    $router->get('/admin/dashboard', [AdminController::class, 'dashboard'], 'admin.dashboard', ['admin']);
     $router->get('/admin/videos', [AdminController::class, 'videos'], 'admin.videos', ['admin']);
     $router->get('/admin/review', [AdminController::class, 'reviews'], 'admin.reviews', ['admin']);
     $router->post('/admin/video/{id}/lock', [AdminController::class, 'lockVideo'], 'admin.video.lock', ['admin']);

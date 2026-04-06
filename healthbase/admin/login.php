@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             session_regenerate_id(true);
             $_SESSION['admin_user_id'] = (int)$user['id'];
             $db->prepare('UPDATE users SET last_login_at = :at WHERE id = :id')->execute(['at' => gmdate('Y-m-d H:i:s'), 'id' => $user['id']]);
-            header('Location: ' . url('/admin'));
+            header('Location: ' . url('/admin/dashboard'));
             exit;
         }
         $error = 'Неверный логин или пароль';
