@@ -18,6 +18,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+$detectedBasePath = preg_replace('#/install/?$#', '', rtrim((string)dirname($_SERVER['SCRIPT_NAME'] ?? '/install/index.php'), '/')) ?: '';
+
 function check_env(): array {
     $checks = [];
     $checks['php_82'] = PHP_VERSION_ID >= 80200;
@@ -40,15 +42,21 @@ if ($step === 4 && !empty($_SESSION['install'])) {
         $stmt = $pdo->prepare('INSERT INTO users (email,password_hash,role,is_active,created_at,updated_at) VALUES (:email,:hash,"admin",1,:now,:now) ON DUPLICATE KEY UPDATE password_hash=VALUES(password_hash), updated_at=VALUES(updated_at)');
         $stmt->execute(['email' => $i['admin_email'], 'hash' => password_hash($i['admin_password'], PASSWORD_DEFAULT), 'now' => gmdate('Y-m-d H:i:s')]);
 
-        $env = "APP_ENV=production\nAPP_URL={$i['site_url']}\nDB_HOST={$i['db_host']}\nDB_PORT={$i['db_port']}\nDB_DATABASE={$i['db_name']}\nDB_USERNAME={$i['db_user']}\nDB_PASSWORD={$i['db_pass']}\nYOUTUBE_CHANNEL_ID={$i['youtube_channel_id']}\nYOUTUBE_API_KEY={$i['youtube_api_key']}\nGEMINI_API_KEY={$i['gemini_api_key']}\nGEMINI_MODEL_ID={$i['gemini_model_id']}\nCRON_TOKEN=" . bin2hex(random_bytes(24)) . "\n";
+        $basePath = trim((string)($i['app_base_path'] ?? ''));
+        if ($basePath === '') {
+            $basePath = $detectedBasePath;
+        }
+        $basePath = ($basePath === '/' || $basePath === '') ? '' : '/' . trim($basePath, '/');
+
+        $env = "APP_ENV=production\nAPP_URL={$i['site_url']}\nAPP_BASE_PATH={$basePath}\nDB_HOST={$i['db_host']}\nDB_PORT={$i['db_port']}\nDB_DATABASE={$i['db_name']}\nDB_USERNAME={$i['db_user']}\nDB_PASSWORD={$i['db_pass']}\nYOUTUBE_CHANNEL_ID={$i['youtube_channel_id']}\nYOUTUBE_API_KEY={$i['youtube_api_key']}\nGEMINI_API_KEY={$i['gemini_api_key']}\nGEMINI_MODEL_ID={$i['gemini_model_id']}\nCRON_TOKEN=" . bin2hex(random_bytes(24)) . "\n";
         file_put_contents(root_path('.env'), $env);
         file_put_contents($lockFile, gmdate('c'));
     } catch (Throwable $e) {
         $errors[] = $e->getMessage();
     }
 }
-?><!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/assets/css/app.css"><title>Установка Healthbase</title></head><body><main class="container"><h1>Установщик Healthbase</h1><?php foreach($errors as $error): ?><p class="error"><?= e($error) ?></p><?php endforeach; ?>
+?><!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="<?= e(url('/assets/css/app.css')) ?>"><title>Установка Healthbase</title></head><body><main class="container"><h1>Установщик Healthbase</h1><?php foreach($errors as $error): ?><p class="error"><?= e($error) ?></p><?php endforeach; ?>
 <?php if($step===1): $checks=check_env(); ?><h2>Шаг 1. Проверка окружения</h2><ul><?php foreach($checks as $k=>$v): ?><li><?= e($k) ?>: <?= $v?'OK':'FAIL' ?></li><?php endforeach; ?></ul><a class="btn" href="?step=2">Далее</a>
 <?php elseif($step===2): ?><h2>Шаг 2. База данных</h2><form method="post"><label>DB Host<input name="db_host" value="127.0.0.1" required></label><label>DB Port<input name="db_port" value="3306" required></label><label>DB Name<input name="db_name" value="healthbase" required></label><label>DB User<input name="db_user" required></label><label>DB Pass<input name="db_pass"></label><button>Сохранить и продолжить</button></form>
-<?php elseif($step===3): ?><h2>Шаг 3. Админ и API</h2><form method="post"><label>Site URL<input name="site_url" required></label><label>YouTube Channel ID<input name="youtube_channel_id" required></label><label>YouTube API key<input name="youtube_api_key" required></label><label>Gemini API key<input name="gemini_api_key" required></label><label>Gemini model id<input name="gemini_model_id" value="gemini-3.1-flash-lite-preview" required></label><label>Admin email<input type="email" name="admin_email" required></label><label>Admin password<input type="password" name="admin_password" required></label><button>Установить</button></form>
-<?php else: ?><h2>Готово</h2><p>Установка завершена. Установщик заблокирован.</p><p><a class="btn" href="/admin/login.php">Войти в админку</a></p><?php endif; ?></main></body></html>
+<?php elseif($step===3): ?><h2>Шаг 3. Админ и API</h2><form method="post"><label>Site URL<input name="site_url" required value="<?= e((string)(($_SESSION['install']['site_url'] ?? '') ?: ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . app_base_path()))) ?>"></label><label>Base path (если в поддиректории)<input name="app_base_path" value="<?= e((string)(($_SESSION['install']['app_base_path'] ?? '') ?: $detectedBasePath)) ?>" placeholder="например /healthbase"></label><label>YouTube Channel ID<input name="youtube_channel_id" required></label><label>YouTube API key<input name="youtube_api_key" required></label><label>Gemini API key<input name="gemini_api_key" required></label><label>Gemini model id<input name="gemini_model_id" value="gemini-3.1-flash-lite-preview" required></label><label>Admin email<input type="email" name="admin_email" required></label><label>Admin password<input type="password" name="admin_password" required></label><button>Установить</button></form>
+<?php else: ?><h2>Готово</h2><p>Установка завершена. Установщик заблокирован.</p><p><a class="btn" href="<?= e(url('/admin/login.php')) ?>">Войти в админку</a></p><?php endif; ?></main></body></html>

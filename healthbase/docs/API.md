@@ -1,13 +1,13 @@
 # API (внутренний)
 
 ## Public
-- `GET /search?q=` — обычный поиск.
-- `POST /search/ai` — AI-intent поиск (CSRF required).
-- `GET /robots.txt` — robots policy.
-- `GET /sitemap.xml` — динамический sitemap.
+- `GET /healthbase/search?q=` — обычный поиск.
+- `POST /healthbase/search/ai` — AI-intent поиск (CSRF required).
+- `GET /healthbase/robots.txt` — robots policy.
+- `GET /healthbase/sitemap.xml` — динамический sitemap.
 
 ## Cron (token required)
-- `GET /cron/sync_youtube.php?token=`
-- `GET /cron/ai_reclassify.php?token=`
-- `GET /cron/rebuild_cache.php?token=`
-- `GET /cron/healthcheck.php?token=`
+- `GET /healthbase/cron/sync_youtube.php?token=`
+- `GET /healthbase/cron/ai_reclassify.php?token=`
+- `GET /healthbase/cron/rebuild_cache.php?token=`
+- `GET /healthbase/cron/healthcheck.php?token=`

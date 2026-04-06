@@ -7,6 +7,7 @@ return [
     'env' => getenv('APP_ENV') ?: 'production',
     'debug' => (bool) (getenv('APP_DEBUG') ?: false),
     'url' => getenv('APP_URL') ?: 'http://localhost',
+    'base_path' => getenv('APP_BASE_PATH') ?: '',
     'timezone' => 'UTC',
     'locale' => 'ru',
     'cache_ttl' => 600,

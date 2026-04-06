@@ -2,10 +2,10 @@
 
 Используйте токен из `.env` (`CRON_TOKEN`).
 
-- `/cron/sync_youtube.php?token=...`
-- `/cron/ai_reclassify.php?token=...`
-- `/cron/rebuild_cache.php?token=...`
-- `/cron/healthcheck.php?token=...`
+- `/healthbase/cron/sync_youtube.php?token=...`
+- `/healthbase/cron/ai_reclassify.php?token=...`
+- `/healthbase/cron/rebuild_cache.php?token=...`
+- `/healthbase/cron/healthcheck.php?token=...`
 
 ## Рекомендуемая частота
 - sync: каждые 30 мин

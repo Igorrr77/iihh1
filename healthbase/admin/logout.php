@@ -5,4 +5,4 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/app/bootstrap.php';
 $_SESSION = [];
 session_destroy();
-header('Location: /admin/login.php');
+header('Location: ' . url('/admin/login.php'));

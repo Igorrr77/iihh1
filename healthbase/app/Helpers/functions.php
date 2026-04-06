@@ -23,6 +23,38 @@ function e(string $value): string
     return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 }
 
+function app_base_path(): string
+{
+    $basePath = trim((string)(config('app')['base_path'] ?? ''));
+    if ($basePath === '') {
+        $script = (string)($_SERVER['SCRIPT_NAME'] ?? '');
+        $dir = rtrim(str_replace('\\', '/', dirname($script)), '/');
+        foreach (['/install', '/admin', '/cron', '/update', '/public'] as $suffix) {
+            if ($dir === $suffix || str_ends_with($dir, $suffix)) {
+                $dir = substr($dir, 0, -strlen($suffix));
+                break;
+            }
+        }
+        $basePath = $dir;
+    }
+    if ($basePath === '' || $basePath === '/') {
+        return '';
+    }
+
+    return '/' . trim($basePath, '/');
+}
+
+function url(string $path = '/'): string
+{
+    $base = app_base_path();
+    $normalized = '/' . ltrim($path, '/');
+    if ($normalized === '//') {
+        $normalized = '/';
+    }
+
+    return $base . ($normalized === '/' ? '/' : $normalized);
+}
+
 function csrf_token(): string
 {
     if (empty($_SESSION['csrf_token'])) {

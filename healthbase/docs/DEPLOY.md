@@ -1,30 +1,29 @@
-# DEPLOY без терминала (режим «без public»)
+# DEPLOY без терминала (diabet.top/healthbase, без /public)
 
-## Что это значит
-Сайт работает из **корня домена**, и вам не нужно менять рабочую директорию на `public`.
+## Сценарий
+Вы размещаете проект в папке:
+
+`/var/www/diabet_top_usr/data/www/diabet.top/healthbase`
+
+и открываете сайт как:
+
+`https://diabet.top/healthbase`
 
 ## Пошагово
-1. Создайте сайт в панели (FastPanel/ISPmanager/cPanel): `hb.diabet.top`.
-2. Оставьте корень сайта стандартным (например `/var/www/.../hb.diabet.top`).
-3. Загрузите **содержимое** папки `healthbase` прямо в этот корень.
-4. Убедитесь, что в корне есть: `index.php`, `.htaccess`, `app/`, `assets/`, `install/`, `cron/`, `storage/`.
-5. Создайте БД и пользователя.
-6. Проверьте права записи для `storage/*`.
-7. Откройте `https://hb.diabet.top/install/index.php` и завершите установку.
-
-## Почему работает без public
-- Точка входа теперь в корне: `index.php`.
-- Корневой `.htaccess` отправляет запросы в роутер и включает `sitemap.xml` rewrite.
+1. В панели оставьте корень основного сайта `diabet.top` как есть.
+2. Загрузите **содержимое** проекта `healthbase` в папку `diabet.top/healthbase`.
+3. Проверьте, что в `diabet.top/healthbase` есть: `index.php`, `.htaccess`, `app/`, `assets/`, `install/`, `cron/`, `storage/`.
+4. Создайте БД и пользователя MySQL.
+5. Откройте `https://diabet.top/healthbase/install/index.php`.
+6. На шаге 3 установщика укажите:
+   - `Site URL`: `https://diabet.top/healthbase`
+   - `Base path`: `/healthbase`
+7. Дайте права записи на `storage/cache`, `storage/logs`, `storage/temp`, `storage/exports`.
 
 ## Где находится storage
-После загрузки проекта в корень домена папка будет здесь:
+`/var/www/diabet_top_usr/data/www/diabet.top/healthbase/storage`
 
-`/var/www/.../hb.diabet.top/storage`
-
-Внутри нужны и уже включены каталоги:
-- `storage/cache`
-- `storage/logs`
-- `storage/temp`
-- `storage/exports`
-
-Именно на эти папки нужны права записи веб-серверу.
+## Почему это работает
+- Приложение поддерживает `APP_BASE_PATH=/healthbase`.
+- Все ссылки/редиректы/роутинг учитывают base path.
+- Не требуется перенос в `/public`.

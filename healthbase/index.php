@@ -11,7 +11,7 @@ use App\Middleware\AdminMiddleware;
 require_once __DIR__ . '/app/bootstrap.php';
 
 if (!is_file(root_path('.env')) || !is_file(root_path('storage/install.lock'))) {
-    header('Location: /install/index.php');
+    header('Location: ' . url('/install/index.php'));
     exit;
 }
 

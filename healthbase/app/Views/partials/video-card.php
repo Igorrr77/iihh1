@@ -1,8 +1,8 @@
 <article class="video-card">
-  <a href="/video/<?= e($video['youtube_video_id']) ?>" class="thumb-link">
-    <img src="<?= e($video['thumbnail_high'] ?: '/assets/images/fallback-thumb.svg') ?>" alt="<?= e($video['title']) ?>" loading="lazy">
+  <a href="<?= e(url('/video/' . $video['youtube_video_id'])) ?>" class="thumb-link">
+    <img src="<?= e($video['thumbnail_high'] ?: url('/assets/images/fallback-thumb.svg')) ?>" alt="<?= e($video['title']) ?>" loading="lazy">
   </a>
-  <h3><a href="/video/<?= e($video['youtube_video_id']) ?>"><?= e($video['title']) ?></a></h3>
+  <h3><a href="<?= e(url('/video/' . $video['youtube_video_id'])) ?>"><?= e($video['title']) ?></a></h3>
   <p><?= e($video['ai_summary'] ?: mb_substr(strip_tags((string)$video['description']), 0, 140) . '...') ?></p>
   <div class="badges">
     <?php if ((int)($video['is_start_here'] ?? 0) === 1): ?><span>Важно</span><?php endif; ?>

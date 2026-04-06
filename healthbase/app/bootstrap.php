@@ -45,5 +45,5 @@ set_exception_handler(static function (\Throwable $e): void {
         return;
     }
 
-    echo '<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/assets/css/app.css"><title>Ошибка</title></head><body><main class="container"><h1>Временная техническая ошибка</h1><p>Мы уже записали ошибку в журнал. Попробуйте позже.</p></main></body></html>';
+    echo '<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="' . e(url('/assets/css/app.css')) . '"><title>Ошибка</title></head><body><main class="container"><h1>Временная техническая ошибка</h1><p>Мы уже записали ошибку в журнал. Попробуйте позже.</p></main></body></html>';
 });

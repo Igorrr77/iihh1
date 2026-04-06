@@ -15,7 +15,11 @@ class Response
 
     public static function redirect(string $url): void
     {
-        header('Location: ' . $url);
+        $target = $url;
+        if (!preg_match('#^https?://#i', $url)) {
+            $target = url($url);
+        }
+        header('Location: ' . $target);
         exit;
     }
 
