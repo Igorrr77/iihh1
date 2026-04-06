@@ -209,5 +209,5 @@ CREATE TABLE IF NOT EXISTS audit_log (
   created_at DATETIME NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE INDEX idx_categories_slug ON categories(slug);
-CREATE INDEX idx_tags_slug ON tags(slug);
+-- Note: categories.slug and tags.slug are already indexed by UNIQUE constraints above.
+-- Explicit duplicate CREATE INDEX statements were removed to keep migration idempotent.
