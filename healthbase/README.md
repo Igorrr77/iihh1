@@ -21,4 +21,6 @@ Production-oriented веб-приложение на **PHP 8.2 + MySQL + HTML/CS
 3. Пройдите мастер установки.
 4. Войдите в админку: `https://hb.diabet.top/admin/login.php`.
 
+Перед запуском убедитесь, что папки `storage/cache`, `storage/logs`, `storage/temp`, `storage/exports` доступны на запись.
+
 Подробности: `docs/INSTALL.md`, `docs/DEPLOY.md`, `docs/CRON.md`.
