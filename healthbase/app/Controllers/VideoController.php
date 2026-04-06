@@ -26,16 +26,8 @@ class VideoController extends BaseController
             Response::view('errors/404', [], 404);
             return;
         }
-        $related = [];
-        if (!empty($video['final_primary_category_id'])) {
-            $stmt = $this->db()->prepare('SELECT slug FROM categories WHERE id = :id LIMIT 1');
-            $stmt->execute(['id' => (int)$video['final_primary_category_id']]);
-            $slug = $stmt->fetchColumn();
-            if ($slug) {
-                $related = (new VideoRepository($this->db()))->findByCategory((string)$slug, 6);
-                $related = array_values(array_filter($related, static fn(array $r): bool => $r['id'] !== $video['id']));
-            }
-        }
+        $categoryId = (int)($video['final_primary_category_id'] ?: $video['ai_primary_category_id']);
+        $related = (new VideoRepository($this->db()))->relatedForVideo((int)$video['id'], $categoryId ?: null, 6);
         Response::view('public/video', compact('video', 'related'));
     }
 }

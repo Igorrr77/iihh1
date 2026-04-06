@@ -23,7 +23,7 @@ class RulePreclassifier
 
     public function guess(string $title, string $description): array
     {
-        $text = mb_strtolower($title . ' ' . $description);
+        $text = mb_strtolower($title);
         $scores = [];
         foreach ($this->map as $slug => $terms) {
             $scores[$slug] = 0;

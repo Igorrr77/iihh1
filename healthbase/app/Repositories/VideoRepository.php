@@ -31,7 +31,7 @@ class VideoRepository
     public function findByCategory(string $slug, int $limit = 20): array
     {
         $sql = 'SELECT v.* FROM videos v
-            INNER JOIN categories c ON c.id = v.final_primary_category_id
+            INNER JOIN categories c ON c.id = COALESCE(v.final_primary_category_id, v.ai_primary_category_id)
             WHERE c.slug = :slug AND v.is_public = 1 AND v.is_long_video = 1
             ORDER BY v.published_at DESC LIMIT :limit';
         $stmt = $this->pdo->prepare($sql);
@@ -45,6 +45,27 @@ class VideoRepository
     {
         $stmt = $this->pdo->prepare('SELECT * FROM videos WHERE is_public = 1 AND is_long_video = 1 AND (title LIKE :q OR description LIKE :q OR ai_summary LIKE :q) ORDER BY published_at DESC LIMIT 50');
         $stmt->execute(['q' => '%' . $query . '%']);
+        return $stmt->fetchAll();
+    }
+
+    public function relatedForVideo(int $videoId, ?int $categoryId, int $limit = 6): array
+    {
+        if ($categoryId) {
+            $stmt = $this->pdo->prepare('SELECT * FROM videos WHERE id != :id AND is_public = 1 AND is_long_video = 1 AND COALESCE(final_primary_category_id, ai_primary_category_id) = :category ORDER BY published_at DESC LIMIT :limit');
+            $stmt->bindValue(':id', $videoId, PDO::PARAM_INT);
+            $stmt->bindValue(':category', $categoryId, PDO::PARAM_INT);
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            $related = $stmt->fetchAll();
+            if (count($related) >= 3) {
+                return $related;
+            }
+        }
+
+        $stmt = $this->pdo->prepare('SELECT * FROM videos WHERE id != :id AND is_public = 1 AND is_long_video = 1 ORDER BY published_at DESC LIMIT :limit');
+        $stmt->bindValue(':id', $videoId, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', max(3, $limit), PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetchAll();
     }
 }

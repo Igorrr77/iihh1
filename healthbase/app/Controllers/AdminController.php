@@ -25,23 +25,19 @@ class AdminController extends BaseController
 
     private function runPseudoCron(): void
     {
-        $setting = $this->db()->query("SELECT value FROM settings WHERE `key`='last_pseudo_cron_at' LIMIT 1")->fetchColumn();
-        $last = $setting ? strtotime((string)$setting) : 0;
-        $interval = (int)(config('app')['sync_interval_minutes'] ?? 30) * 60;
-        if (time() - $last < $interval) {
-            return;
-        }
-
         $token = getenv('CRON_TOKEN');
         if (!$token) {
             return;
         }
 
-        @file_get_contents(rtrim((string)config('app')['url'], '/') . '/cron/sync_youtube.php?token=' . urlencode($token));
+        $base = rtrim((string)config('app')['url'], '/');
+        $path = app_base_path();
+        @file_get_contents($base . $path . '/cron/sync_youtube.php?token=' . urlencode($token));
+        @file_get_contents($base . $path . '/cron/ai_reclassify.php?token=' . urlencode($token));
         $stmt = $this->db()->prepare("INSERT INTO settings (`key`,`value`,`type`,created_at,updated_at) VALUES ('last_pseudo_cron_at',:v,'datetime',:now,:now) ON DUPLICATE KEY UPDATE `value`=:v, updated_at=:now");
         $now = gmdate('Y-m-d H:i:s');
         $stmt->execute(['v' => $now, 'now' => $now]);
-        (new Logger())->log('app', 'Pseudo-cron sync triggered from admin dashboard');
+        (new Logger())->log('app', 'Sync and AI refresh triggered from admin dashboard entry');
     }
 
     public function videos(Request $request): void

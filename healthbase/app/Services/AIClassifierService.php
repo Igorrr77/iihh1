@@ -39,7 +39,7 @@ class AIClassifierService
         $schema = file_get_contents(root_path('app/AI/Prompts/classification_v1.txt'));
         return strtr($schema, [
             '{{title}}' => $video['title'] ?? '',
-            '{{description}}' => mb_substr((string)($video['description'] ?? ''), 0, 4000),
+            '{{description}}' => '',
             '{{taxonomy}}' => json_encode(array_column($taxonomy, 'slug'), JSON_UNESCAPED_UNICODE),
             '{{hints}}' => json_encode($ruleHints, JSON_UNESCAPED_UNICODE),
         ]);
@@ -50,7 +50,7 @@ class AIClassifierService
         $schema = file_get_contents(root_path('app/AI/Prompts/validation_v1.txt'));
         return strtr($schema, [
             '{{title}}' => $video['title'] ?? '',
-            '{{description}}' => mb_substr((string)($video['description'] ?? ''), 0, 3000),
+            '{{description}}' => '',
             '{{taxonomy}}' => json_encode(array_column($taxonomy, 'slug'), JSON_UNESCAPED_UNICODE),
             '{{classification}}' => json_encode($classification, JSON_UNESCAPED_UNICODE),
         ]);

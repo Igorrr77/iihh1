@@ -78,7 +78,7 @@ class YouTubeSyncService
             'thumbnail_high' => $payload['snippet']['thumbnails']['high']['url'] ?? '',
             'thumbnail_maxres' => $payload['snippet']['thumbnails']['maxres']['url'] ?? null,
             'url' => 'https://www.youtube.com/watch?v=' . $videoId,
-            'embed_url' => 'https://www.youtube.com/embed/' . $videoId,
+            'embed_url' => 'https://www.youtube.com/embed/' . $videoId . '?rel=0&modestbranding=1&iv_load_policy=3&playsinline=1',
             'status' => 'synced',
             'is_public' => 1,
             'is_long_video' => $isLong,
