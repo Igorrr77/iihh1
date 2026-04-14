@@ -126,15 +126,17 @@ final class RuntimeService
         $update->execute(['id' => $state['id']]);
 
         $executionId = (int)$state['execution_id'];
-        $this->executions->step($executionId, 0, (string)$state['node_uuid'], 'wait_input', 'completed', $payload, ['captured' => $value]);
 
         $executionStmt = $pdo->prepare('SELECT e.*, pv.compiled_graph_json, b.token_encrypted FROM executions e JOIN process_versions pv ON pv.id=e.process_version_id JOIN bots b ON b.id=e.bot_id WHERE e.id=:id LIMIT 1');
         $executionStmt->execute(['id' => $executionId]);
         $execution = $executionStmt->fetch();
         if (!$execution) {
+            $this->executions->step($executionId, 0, (string)$state['node_uuid'], 'wait_input', 'completed', $payload, ['captured' => $value]);
             $this->executions->setStatus($executionId, 'completed', (string)$state['node_uuid']);
             return true;
         }
+
+        $this->executions->step($executionId, (int)$execution['process_version_id'], (string)$state['node_uuid'], 'wait_input', 'completed', $payload, ['captured' => $value]);
 
         $compiled = json_decode((string)$execution['compiled_graph_json'], true);
         if (!is_array($compiled)) {
@@ -149,10 +151,25 @@ final class RuntimeService
         $saveTo = (string)($state['save_to_key'] ?? 'input');
         $context['vars'][$saveTo] = $value;
         $context['process_version_id'] = (int)$execution['process_version_id'];
+        if (!isset($context['telegram_chat_id']) || (int)$context['telegram_chat_id'] <= 0) {
+            $contactStmt = $pdo->prepare('SELECT telegram_chat_id FROM contacts WHERE id=:id LIMIT 1');
+            $contactStmt->execute(['id' => (int)$execution['contact_id']]);
+            $context['telegram_chat_id'] = (int)($contactStmt->fetchColumn() ?: 0);
+        }
         $this->executions->updateContext($executionId, $context);
 
         $currentNode = $compiled['nodes'][(string)$state['node_uuid']] ?? null;
-        $nextNode = $currentNode['next'][0]['target'] ?? null;
+        $nextNode = null;
+        $successPort = (string)($state['success_port'] ?? 'success');
+        foreach ($currentNode['next'] ?? [] as $edge) {
+            if ((string)($edge['port'] ?? '') === $successPort) {
+                $nextNode = $edge['target'] ?? null;
+                break;
+            }
+        }
+        if (!is_string($nextNode) || $nextNode === '') {
+            $nextNode = $currentNode['next'][0]['target'] ?? null;
+        }
         if (!is_string($nextNode) || $nextNode === '') {
             $this->executions->setStatus($executionId, 'completed', (string)$state['node_uuid']);
             return true;
