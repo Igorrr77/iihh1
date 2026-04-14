@@ -14,6 +14,7 @@ use App\Repositories\ChatRepository;
 use App\Repositories\ContactRepository;
 use App\Repositories\DealRepository;
 use App\Repositories\FunnelRepository;
+use App\Repositories\GuardrailRepository;
 use App\Repositories\MarketplaceRepository;
 use App\Repositories\TemplateRepository;
 use App\Repositories\ProcessRepository;
@@ -47,58 +48,58 @@ final class ApiController
         $scope = $this->requireScope();
 
         if ($path === 'api/projects' && $method === 'GET') return $this->projectsIndex($scope);
-        if ($path === 'api/projects' && $method === 'POST') return $this->projectsStore($request, $scope);
+        if ($path === 'api/projects' && $method === 'POST') return $this->guardedWrite($request, $scope, 'projects_store', fn () => $this->projectsStore($request, $scope));
         if (preg_match('#^api/projects/(\d+)$#', $path, $m) && $method === 'GET') return $this->projectsShow((int)$m[1], $scope);
-        if (preg_match('#^api/projects/(\d+)$#', $path, $m) && $method === 'PUT') return $this->projectsUpdate((int)$m[1], $request, $scope);
+        if (preg_match('#^api/projects/(\d+)$#', $path, $m) && $method === 'PUT') return $this->guardedWrite($request, $scope, 'projects_update', fn () => $this->projectsUpdate((int)$m[1], $request, $scope));
 
-        if ($path === 'api/bots' && $method === 'POST') return $this->botsStore($request, $scope);
-        if (preg_match('#^api/bots/(\d+)/(verify|set-webhook|delete-webhook)$#', $path, $m) && $method === 'POST') return $this->botsAction((int)$m[1], $m[2], $scope);
+        if ($path === 'api/bots' && $method === 'POST') return $this->guardedWrite($request, $scope, 'bots_store', fn () => $this->botsStore($request, $scope));
+        if (preg_match('#^api/bots/(\d+)/(verify|set-webhook|delete-webhook)$#', $path, $m) && $method === 'POST') return $this->guardedWrite($request, $scope, 'bots_action', fn () => $this->botsAction((int)$m[1], $m[2], $scope));
 
         if ($path === 'api/processes' && $method === 'GET') return $this->processesIndex($scope);
-        if ($path === 'api/processes' && $method === 'POST') return $this->processesStore($request, $scope);
-        if (preg_match('#^api/processes/(\d+)/versions$#', $path, $m) && $method === 'POST') return $this->versionsStore((int)$m[1], $request, $scope);
-        if (preg_match('#^api/process-versions/(\d+)$#', $path, $m) && $method === 'PUT') return $this->versionsUpdate((int)$m[1], $request, $scope);
-        if (preg_match('#^api/process-versions/(\d+)/validate$#', $path, $m) && $method === 'POST') return $this->versionsValidate((int)$m[1], $scope);
-        if (preg_match('#^api/process-versions/(\d+)/publish$#', $path, $m) && $method === 'POST') return $this->versionsPublish((int)$m[1], $scope);
+        if ($path === 'api/processes' && $method === 'POST') return $this->guardedWrite($request, $scope, 'processes_store', fn () => $this->processesStore($request, $scope));
+        if (preg_match('#^api/processes/(\d+)/versions$#', $path, $m) && $method === 'POST') return $this->guardedWrite($request, $scope, 'versions_store', fn () => $this->versionsStore((int)$m[1], $request, $scope));
+        if (preg_match('#^api/process-versions/(\d+)$#', $path, $m) && $method === 'PUT') return $this->guardedWrite($request, $scope, 'versions_update', fn () => $this->versionsUpdate((int)$m[1], $request, $scope));
+        if (preg_match('#^api/process-versions/(\d+)/validate$#', $path, $m) && $method === 'POST') return $this->guardedWrite($request, $scope, 'versions_validate', fn () => $this->versionsValidate((int)$m[1], $scope));
+        if (preg_match('#^api/process-versions/(\d+)/publish$#', $path, $m) && $method === 'POST') return $this->guardedWrite($request, $scope, 'versions_publish', fn () => $this->versionsPublish((int)$m[1], $scope));
 
         if ($path === 'api/contacts' && $method === 'GET') return $this->contactsIndex($request, $scope);
         if (preg_match('#^api/contacts/(\d+)$#', $path, $m) && $method === 'GET') return $this->contactsShow((int)$m[1], $scope);
-        if (preg_match('#^api/contacts/(\d+)$#', $path, $m) && $method === 'PUT') return $this->contactsUpdate((int)$m[1], $request, $scope);
-        if (preg_match('#^api/contacts/(\d+)/tags$#', $path, $m) && $method === 'POST') return $this->contactsAddTag((int)$m[1], $request, $scope);
-        if (preg_match('#^api/contacts/(\d+)/tags/(\d+)$#', $path, $m) && $method === 'DELETE') return $this->contactsRemoveTag((int)$m[1], (int)$m[2], $scope);
+        if (preg_match('#^api/contacts/(\d+)$#', $path, $m) && $method === 'PUT') return $this->guardedWrite($request, $scope, 'contacts_update', fn () => $this->contactsUpdate((int)$m[1], $request, $scope));
+        if (preg_match('#^api/contacts/(\d+)/tags$#', $path, $m) && $method === 'POST') return $this->guardedWrite($request, $scope, 'contacts_add_tag', fn () => $this->contactsAddTag((int)$m[1], $request, $scope));
+        if (preg_match('#^api/contacts/(\d+)/tags/(\d+)$#', $path, $m) && $method === 'DELETE') return $this->guardedWrite($request, $scope, 'contacts_remove_tag', fn () => $this->contactsRemoveTag((int)$m[1], (int)$m[2], $scope));
 
         if ($path === 'api/chats' && $method === 'GET') return $this->chatsIndex($scope);
         if (preg_match('#^api/chats/(\d+)/messages$#', $path, $m) && $method === 'GET') return $this->chatsMessages((int)$m[1], $scope);
-        if (preg_match('#^api/chats/(\d+)/send-message$#', $path, $m) && $method === 'POST') return $this->chatsSend((int)$m[1], $request, $scope);
-        if (preg_match('#^api/chats/(\d+)/mode$#', $path, $m) && $method === 'POST') return $this->chatsMode((int)$m[1], $request, $scope);
+        if (preg_match('#^api/chats/(\d+)/send-message$#', $path, $m) && $method === 'POST') return $this->guardedWrite($request, $scope, 'chats_send', fn () => $this->chatsSend((int)$m[1], $request, $scope));
+        if (preg_match('#^api/chats/(\d+)/mode$#', $path, $m) && $method === 'POST') return $this->guardedWrite($request, $scope, 'chats_mode', fn () => $this->chatsMode((int)$m[1], $request, $scope));
 
         if ($path === 'api/funnels' && $method === 'GET') return $this->funnelsIndex($request, $scope);
-        if ($path === 'api/funnels' && $method === 'POST') return $this->funnelsStore($request, $scope);
+        if ($path === 'api/funnels' && $method === 'POST') return $this->guardedWrite($request, $scope, 'funnels_store', fn () => $this->funnelsStore($request, $scope));
         if (preg_match('#^api/funnels/(\d+)/analytics$#', $path, $m) && $method === 'GET') return $this->funnelsAnalytics((int)$m[1], $scope);
 
         if ($path === 'api/pipelines' && $method === 'GET') return $this->pipelinesIndex($request, $scope);
-        if ($path === 'api/pipelines' && $method === 'POST') return $this->pipelinesStore($request, $scope);
+        if ($path === 'api/pipelines' && $method === 'POST') return $this->guardedWrite($request, $scope, 'pipelines_store', fn () => $this->pipelinesStore($request, $scope));
         if ($path === 'api/deals' && $method === 'GET') return $this->dealsIndex($request, $scope);
-        if ($path === 'api/deals' && $method === 'POST') return $this->dealsStore($request, $scope);
-        if (preg_match('#^api/deals/(\d+)/move-stage$#', $path, $m) && $method === 'POST') return $this->dealsMoveStage((int)$m[1], $request, $scope);
-        if (preg_match('#^api/deals/(\d+)/notes$#', $path, $m) && $method === 'POST') return $this->dealsAddNote((int)$m[1], $request, $scope);
-        if (preg_match('#^api/deals/(\d+)/tasks$#', $path, $m) && $method === 'POST') return $this->dealsAddTask((int)$m[1], $request, $scope);
+        if ($path === 'api/deals' && $method === 'POST') return $this->guardedWrite($request, $scope, 'deals_store', fn () => $this->dealsStore($request, $scope));
+        if (preg_match('#^api/deals/(\d+)/move-stage$#', $path, $m) && $method === 'POST') return $this->guardedWrite($request, $scope, 'deals_move_stage', fn () => $this->dealsMoveStage((int)$m[1], $request, $scope));
+        if (preg_match('#^api/deals/(\d+)/notes$#', $path, $m) && $method === 'POST') return $this->guardedWrite($request, $scope, 'deals_add_note', fn () => $this->dealsAddNote((int)$m[1], $request, $scope));
+        if (preg_match('#^api/deals/(\d+)/tasks$#', $path, $m) && $method === 'POST') return $this->guardedWrite($request, $scope, 'deals_add_task', fn () => $this->dealsAddTask((int)$m[1], $request, $scope));
 
         if ($path === 'api/templates/message' && $method === 'GET') return $this->messageTemplatesIndex($scope);
-        if ($path === 'api/templates/message' && $method === 'POST') return $this->messageTemplatesStore($request, $scope);
+        if ($path === 'api/templates/message' && $method === 'POST') return $this->guardedWrite($request, $scope, 'message_templates_store', fn () => $this->messageTemplatesStore($request, $scope));
         if ($path === 'api/templates/reusable' && $method === 'GET') return $this->reusableBlocksIndex($scope);
-        if ($path === 'api/templates/reusable' && $method === 'POST') return $this->reusableBlocksStore($request, $scope);
+        if ($path === 'api/templates/reusable' && $method === 'POST') return $this->guardedWrite($request, $scope, 'reusable_blocks_store', fn () => $this->reusableBlocksStore($request, $scope));
         if (preg_match('#^api/templates/message/(\d+)/export$#', $path, $m) && $method === 'GET') return $this->messageTemplateExport((int)$m[1], $scope);
-        if ($path === 'api/templates/message/import' && $method === 'POST') return $this->messageTemplateImport($request, $scope);
+        if ($path === 'api/templates/message/import' && $method === 'POST') return $this->guardedWrite($request, $scope, 'message_template_import', fn () => $this->messageTemplateImport($request, $scope));
 
         if ($path === 'api/marketplace/items' && $method === 'GET') return $this->marketplaceItems();
         if (preg_match('#^api/marketplace/items/(\d+)$#', $path, $m) && $method === 'GET') return $this->marketplaceItem((int)$m[1]);
-        if (preg_match('#^api/marketplace/items/(\d+)/install$#', $path, $m) && $method === 'POST') return $this->marketplaceInstall((int)$m[1], $request, $scope);
+        if (preg_match('#^api/marketplace/items/(\d+)/install$#', $path, $m) && $method === 'POST') return $this->guardedWrite($request, $scope, 'marketplace_install', fn () => $this->marketplaceInstall((int)$m[1], $request, $scope));
         if (preg_match('#^api/marketplace/items/(\d+)/export$#', $path, $m) && $method === 'GET') return $this->marketplaceExport((int)$m[1], $scope);
-        if ($path === 'api/marketplace/import' && $method === 'POST') return $this->marketplaceImport($request, $scope);
+        if ($path === 'api/marketplace/import' && $method === 'POST') return $this->guardedWrite($request, $scope, 'marketplace_import', fn () => $this->marketplaceImport($request, $scope));
 
         if ($path === 'api/process-templates' && $method === 'GET') return $this->processTemplatesIndex($scope);
-        if ($path === 'api/process-templates' && $method === 'POST') return $this->processTemplatesStore($request, $scope);
+        if ($path === 'api/process-templates' && $method === 'POST') return $this->guardedWrite($request, $scope, 'process_templates_store', fn () => $this->processTemplatesStore($request, $scope));
 
         return Response::json(['error' => 'not_found'], 404);
     }
@@ -520,5 +521,49 @@ final class ApiController
         $auth = $this->container->get(AuthService::class)->auth();
         if (!$auth) return null;
         return ['user_id' => (int)$auth['user_id'], 'account_id' => (int)$auth['account_id'], 'role_code' => (string)$auth['role_code']];
+    }
+
+    private function guardedWrite(Request $request, ?array $scope, string $action, callable $callback): Response
+    {
+        if (!$scope) return Response::json(['error' => 'unauthorized'], 401);
+
+        $guardrails = $this->container->get(GuardrailRepository::class);
+        $rateLimited = $guardrails->hitRateLimit('api_write', $scope['account_id'] . ':' . $scope['user_id'], 120, 1);
+        if ($rateLimited) {
+            return Response::json(['error' => 'rate_limit_exceeded'], 429);
+        }
+
+        $idempotencyKey = trim((string)($request->header('Idempotency-Key') ?? ''));
+        if ($idempotencyKey !== '') {
+            $requestHash = hash('sha256', $request->method() . '|' . $request->path() . '|' . $request->rawBody());
+            $idempotency = $guardrails->takeIdempotency($scope['account_id'], $idempotencyKey, $requestHash);
+            if (($idempotency['status'] ?? '') === 'conflict') {
+                return Response::json(['error' => 'idempotency_conflict'], 409);
+            }
+            if (($idempotency['status'] ?? '') === 'replay' && is_array($idempotency['response_json'] ?? null)) {
+                $status = (int)($idempotency['response_json']['status'] ?? 200);
+                $payload = $idempotency['response_json']['payload'] ?? ['status' => 'ok'];
+                return Response::json(is_array($payload) ? $payload : ['status' => 'ok'], $status);
+            }
+        }
+
+        $response = $callback();
+        $payload = $response->jsonPayload();
+
+        if ($idempotencyKey !== '' && $payload !== null && $response->status() < 500) {
+            $guardrails->saveIdempotencyResponse($scope['account_id'], $idempotencyKey, ['status' => $response->status(), 'payload' => $payload]);
+        }
+
+        $guardrails->audit([
+            'account_id' => $scope['account_id'],
+            'user_id' => $scope['user_id'],
+            'entity_type' => 'api',
+            'action' => $action,
+            'after' => $payload,
+            'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
+        ]);
+
+        return $response;
     }
 }

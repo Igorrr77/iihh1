@@ -26,4 +26,18 @@ final class Response
         header('Content-Type: ' . $this->type);
         echo $this->content;
     }
+
+    public function status(): int
+    {
+        return $this->status;
+    }
+
+    public function jsonPayload(): ?array
+    {
+        if ($this->type !== 'application/json') {
+            return null;
+        }
+        $decoded = json_decode($this->content, true);
+        return is_array($decoded) ? $decoded : null;
+    }
 }
