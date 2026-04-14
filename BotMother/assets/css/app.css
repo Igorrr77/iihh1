@@ -1,0 +1,7 @@
+body{font-family:Arial,sans-serif;margin:0} .editor-layout{display:grid;grid-template-columns:220px 1fr 320px;height:100vh}
+.palette,.inspector{padding:12px;background:#f5f7fa;border-right:1px solid #dde3ee} .inspector{border-left:1px solid #dde3ee;border-right:none;overflow:auto}
+.canvas-wrap{position:relative;background:#fff;overflow:hidden} .toolbar{padding:8px;border-bottom:1px solid #e5e7eb;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#viewport{position:relative;transform-origin:0 0;width:2000px;height:1400px} #canvas{position:absolute;inset:0}
+.node{position:absolute;border:1px solid #3b82f6;background:#eff6ff;padding:8px;border-radius:8px;cursor:move;box-sizing:border-box;user-select:none}
+#edges{position:absolute;inset:0;pointer-events:none}
+#autosaveState{font-size:12px;color:#475569}
