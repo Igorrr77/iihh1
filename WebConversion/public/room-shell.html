@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="ru" data-theme="default">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>WebConversion Room Shell</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --bg-panel: #131b34;
+      --bg-video: #1a2340;
+      --text: #f4f6ff;
+      --muted: #25355f;
+      --border: #2c3f72;
+      --accent: #2a7fff;
+      --focus: #ffcc00;
+      color-scheme: dark;
+    }
+    html[data-theme="high-contrast"] {
+      --bg: #000;
+      --bg-panel: #000;
+      --bg-video: #111;
+      --text: #fff;
+      --muted: #222;
+      --border: #fff;
+      --accent: #00e5ff;
+      --focus: #00ff66;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    a, button { color: inherit; }
+    .skip-link {
+      position: absolute;
+      left: 8px;
+      top: -40px;
+      background: var(--accent);
+      color: #fff;
+      padding: 8px 10px;
+      border-radius: 6px;
+      z-index: 1000;
+      text-decoration: none;
+    }
+    .skip-link:focus { top: 8px; }
+    .room {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+    .video-wrap { padding: 16px; }
+    .video {
+      aspect-ratio: 16/9;
+      width: 100%;
+      border-radius: 12px;
+      background: var(--bg-video);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+    }
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      margin: 10px 0;
+      flex-wrap: wrap;
+    }
+    .btn {
+      border: 1px solid var(--border);
+      background: transparent;
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+    .state {
+      margin-top: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      display: inline-block;
+      background: var(--muted);
+    }
+    .panel {
+      padding: 16px;
+      border-left: 1px solid var(--border);
+      background: var(--bg-panel);
+    }
+    .chat {
+      min-height: 260px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+      overflow: auto;
+      max-height: 60vh;
+    }
+    .help {
+      margin: 0 0 8px;
+      font-size: 14px;
+      opacity: 0.95;
+    }
+    .cta {
+      position: sticky;
+      bottom: calc(12px + env(safe-area-inset-bottom));
+      background: var(--accent);
+      color: #fff;
+      text-align: center;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: bold;
+      border: none;
+      width: 100%;
+      cursor: pointer;
+    }
+    :focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+    @media (max-width: 900px) {
+      .room { grid-template-columns: 1fr; }
+      .video-wrap { padding-bottom: 6px; }
+      .panel {
+        border-left: none;
+        border-top: 1px solid var(--border);
+        padding-bottom: calc(84px + env(safe-area-inset-bottom));
+      }
+      .cta {
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        bottom: calc(12px + env(safe-area-inset-bottom));
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="#chatBox" class="skip-link">Перейти к чату</a>
+
+  <main class="room" aria-label="Webinar room shell">
+    <section class="video-wrap" aria-label="Видео секция">
+      <h1 style="margin:0 0 8px; font-size:20px;">Webinar Room (Sprint 2 baseline)</h1>
+      <div class="video" id="videoStage" aria-label="Видеоплеер">Video Stage (waiting/live/ended)</div>
+      <div class="toolbar" aria-label="Управление комнатой">
+        <button class="btn" id="stateWaiting" type="button">Waiting</button>
+        <button class="btn" id="stateLive" type="button">Live</button>
+        <button class="btn" id="stateEnded" type="button">Ended</button>
+        <button class="btn" id="toggleContrast" type="button" aria-pressed="false">High contrast</button>
+      </div>
+      <p class="help">Горячие клавиши: <kbd>W</kbd> waiting, <kbd>L</kbd> live, <kbd>E</kbd> ended, <kbd>C</kbd> contrast.</p>
+      <div class="state" id="roomState" aria-live="polite">state: waiting</div>
+    </section>
+
+    <aside class="panel" aria-label="Панель чата и CTA">
+      <h2 style="margin-top:0; font-size:18px;">Чат и оффер</h2>
+      <div class="chat" id="chatBox" role="log" aria-live="polite" tabindex="0">Chat messages...</div>
+      <button class="cta" id="ctaBtn" type="button" aria-label="Открыть предложение">Открыть предложение</button>
+    </aside>
+  </main>
+
+  <script>
+    (function () {
+      const root = document.documentElement;
+      const stateEl = document.getElementById('roomState');
+      const contrastBtn = document.getElementById('toggleContrast');
+      const cta = document.getElementById('ctaBtn');
+      const chat = document.getElementById('chatBox');
+
+      function emit(type, payload) {
+        const message = {
+          source: 'webconversion-room',
+          sdk_contract_version: 'v1',
+          type,
+          payload: payload || {}
+        };
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage(message, '*');
+        }
+      }
+
+      function setState(nextState) {
+        const normalized = String(nextState || 'waiting');
+        stateEl.textContent = 'state: ' + normalized;
+        emit('state_changed', { state: normalized });
+      }
+
+      function toggleContrast() {
+        const active = root.getAttribute('data-theme') === 'high-contrast';
+        root.setAttribute('data-theme', active ? 'default' : 'high-contrast');
+        contrastBtn.setAttribute('aria-pressed', active ? 'false' : 'true');
+      }
+
+      window.WebConversionRoom = {
+        sdk_contract_version: 'v1',
+        setState,
+        emit,
+        toggleContrast
+      };
+
+      document.getElementById('stateWaiting').addEventListener('click', () => setState('waiting'));
+      document.getElementById('stateLive').addEventListener('click', () => setState('live'));
+      document.getElementById('stateEnded').addEventListener('click', () => setState('ended'));
+      contrastBtn.addEventListener('click', toggleContrast);
+
+      cta.addEventListener('click', function () {
+        chat.textContent += '\n[system] CTA clicked';
+        emit('cta_click', { cta_id: 'primary_offer' });
+        emit('checkout_open', { offer_id: 'offer_primary' });
+      });
+
+      document.addEventListener('keydown', function (event) {
+        if (event.altKey || event.ctrlKey || event.metaKey) return;
+        const key = event.key.toLowerCase();
+        if (key === 'w') setState('waiting');
+        if (key === 'l') setState('live');
+        if (key === 'e') setState('ended');
+        if (key === 'c') toggleContrast();
+      });
+
+      emit('ready', {});
+    })();
+  </script>
+</body>
+</html>
