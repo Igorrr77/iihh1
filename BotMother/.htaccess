@@ -1,0 +1,28 @@
+Options -Indexes
+ServerSignature Off
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+RewriteEngine On
+
+# deny sensitive files
+RewriteRule (^|/)\.env - [F,L]
+RewriteRule (^|/)(composer\.(json|lock)|.*\.(sql|log|md|bak|old|dist))$ - [F,L,NC]
+
+# deny private directories
+RewriteRule ^(app|config|database|storage|docs|cron)(/|$) - [F,L,NC]
+
+# allow static/install/update/api/webhook
+RewriteCond %{REQUEST_URI} ^/(assets|install|update)/ [OR]
+RewriteCond %{REQUEST_URI} ^/(index\.php|api\.php|webhook\.php)$
+RewriteRule ^ - [L]
+
+# route everything to index
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [L,QSA]
