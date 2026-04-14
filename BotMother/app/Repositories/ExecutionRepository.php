@@ -66,4 +66,13 @@ final class ExecutionRepository extends BaseRepository
             'expires_at' => $data['expires_at'] ?? null,
         ]);
     }
+
+    public function updateContext(int $executionId, array $context): void
+    {
+        $stmt = $this->pdo()->prepare('UPDATE executions SET context_json=:context_json, updated_at=NOW() WHERE id=:id');
+        $stmt->execute([
+            'id' => $executionId,
+            'context_json' => json_encode($context, JSON_UNESCAPED_UNICODE),
+        ]);
+    }
 }

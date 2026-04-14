@@ -125,8 +125,41 @@ final class RuntimeService
         $update = $pdo->prepare('UPDATE waiting_states SET status="resolved", updated_at=NOW() WHERE id=:id');
         $update->execute(['id' => $state['id']]);
 
-        $this->executions->step((int)$state['execution_id'], 0, (string)$state['node_uuid'], 'wait_input', 'completed', $payload, ['captured' => $value]);
-        $this->executions->setStatus((int)$state['execution_id'], 'completed', (string)$state['node_uuid']);
+        $executionId = (int)$state['execution_id'];
+        $this->executions->step($executionId, 0, (string)$state['node_uuid'], 'wait_input', 'completed', $payload, ['captured' => $value]);
+
+        $executionStmt = $pdo->prepare('SELECT e.*, pv.compiled_graph_json, b.token_encrypted FROM executions e JOIN process_versions pv ON pv.id=e.process_version_id JOIN bots b ON b.id=e.bot_id WHERE e.id=:id LIMIT 1');
+        $executionStmt->execute(['id' => $executionId]);
+        $execution = $executionStmt->fetch();
+        if (!$execution) {
+            $this->executions->setStatus($executionId, 'completed', (string)$state['node_uuid']);
+            return true;
+        }
+
+        $compiled = json_decode((string)$execution['compiled_graph_json'], true);
+        if (!is_array($compiled)) {
+            $this->executions->setStatus($executionId, 'completed', (string)$state['node_uuid']);
+            return true;
+        }
+
+        $context = json_decode((string)$execution['context_json'], true);
+        if (!is_array($context)) {
+            $context = [];
+        }
+        $saveTo = (string)($state['save_to_key'] ?? 'input');
+        $context['vars'][$saveTo] = $value;
+        $context['process_version_id'] = (int)$execution['process_version_id'];
+        $this->executions->updateContext($executionId, $context);
+
+        $currentNode = $compiled['nodes'][(string)$state['node_uuid']] ?? null;
+        $nextNode = $currentNode['next'][0]['target'] ?? null;
+        if (!is_string($nextNode) || $nextNode === '') {
+            $this->executions->setStatus($executionId, 'completed', (string)$state['node_uuid']);
+            return true;
+        }
+
+        $telegram = new TelegramClient(TokenCipher::decrypt((string)$execution['token_encrypted']));
+        $this->engine->resumeCompiled($executionId, $compiled, $context, $nextNode, $telegram);
         return true;
     }
 }
