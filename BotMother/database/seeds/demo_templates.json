@@ -1,0 +1,12 @@
+[
+  {"name":"Welcome funnel","type":"process_template"},
+  {"name":"Lead capture with phone","type":"process_template"},
+  {"name":"3-question quiz","type":"process_template"},
+  {"name":"Reminder after 1 day","type":"process_template"},
+  {"name":"External webhook start","type":"process_template"},
+  {"name":"Consultation booking flow","type":"process_template"},
+  {"name":"Sales follow-up flow","type":"process_template"},
+  {"name":"Lead qualification reusable block","type":"reusable_block"},
+  {"name":"Deal creation after qualified answer","type":"process_template"},
+  {"name":"Mini onboarding sequence","type":"message_template"}
+]
