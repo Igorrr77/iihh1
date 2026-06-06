@@ -1,0 +1,5 @@
+.env
+storage/*.sqlite
+storage/*.db
+storage/*.log
+logs/*.log
